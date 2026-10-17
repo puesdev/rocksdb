@@ -11,9 +11,11 @@
 #include <atomic>
 #include <sstream>
 #include <string>
+
 #include "file/random_access_file_reader.h"
 #include "port/port.h"
 #include "rocksdb/env.h"
+#include "rocksdb/options.h"
 #include "util/aligned_buffer.h"
 
 namespace ROCKSDB_NAMESPACE {
@@ -39,16 +41,16 @@ class FilePrefetchBuffer {
   //
   // Automatic readhead is enabled for a file if file_reader, readahead_size,
   // and max_readahead_size are passed in.
-  // If file_reader is a nullptr, setting readadhead_size and max_readahead_size
+  // If file_reader is a nullptr, setting readahead_size and max_readahead_size
   // does not make any sense. So it does nothing.
   // A user can construct a FilePrefetchBuffer without any arguments, but use
   // `Prefetch` to load data into the buffer.
   FilePrefetchBuffer(RandomAccessFileReader* file_reader = nullptr,
-                     size_t readadhead_size = 0, size_t max_readahead_size = 0,
+                     size_t readahead_size = 0, size_t max_readahead_size = 0,
                      bool enable = true, bool track_min_offset = false)
       : buffer_offset_(0),
         file_reader_(file_reader),
-        readahead_size_(readadhead_size),
+        readahead_size_(readahead_size),
         max_readahead_size_(max_readahead_size),
         min_offset_read_(port::kMaxSizet),
         enable_(enable),
@@ -59,21 +61,21 @@ class FilePrefetchBuffer {
   // offset : the file offset to start reading from.
   // n      : the number of bytes to read.
   // for_compaction : if prefetch is done for compaction read.
-  Status Prefetch(RandomAccessFileReader* reader, uint64_t offset, size_t n,
-                  bool for_compaction = false);
+  Status Prefetch(const IOOptions& opts, RandomAccessFileReader* reader,
+                  uint64_t offset, size_t n, bool for_compaction = false);
 
   // Tries returning the data for a file raed from this buffer, if that data is
   // in the buffer.
   // It handles tracking the minimum read offset if track_min_offset = true.
-  // It also does the exponential readahead when readadhead_size is set as part
+  // It also does the exponential readahead when readahead_size is set as part
   // of the constructor.
   //
   // offset : the file offset.
   // n      : the number of bytes.
   // result : output buffer to put the data into.
   // for_compaction : if cache read is done for compaction read.
-  bool TryReadFromCache(uint64_t offset, size_t n, Slice* result,
-                        bool for_compaction = false);
+  bool TryReadFromCache(const IOOptions& opts, uint64_t offset, size_t n,
+                        Slice* result, Status* s, bool for_compaction = false);
 
   // The minimum `offset` ever passed to TryReadFromCache(). This will nly be
   // tracked if track_min_offset = true.

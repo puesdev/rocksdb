@@ -86,8 +86,8 @@ bool NotifyCollectTableCollectorsOnAdd(
 
 void NotifyCollectTableCollectorsOnBlockAdd(
     const std::vector<std::unique_ptr<IntTblPropCollector>>& collectors,
-    uint64_t blockRawBytes, uint64_t blockCompressedBytesFast,
-    uint64_t blockCompressedBytesSlow);
+    uint64_t block_raw_bytes, uint64_t block_compressed_bytes_fast,
+    uint64_t block_compressed_bytes_slow);
 
 // NotifyCollectTableCollectorsOnFinish() triggers the `Finish` event for all
 // property collectors. The collected properties will be added to `builder`.
@@ -99,7 +99,8 @@ bool NotifyCollectTableCollectorsOnFinish(
 // @returns a status to indicate if the operation succeeded. On success,
 //          *table_properties will point to a heap-allocated TableProperties
 //          object, otherwise value of `table_properties` will not be modified.
-Status ReadProperties(const Slice& handle_value, RandomAccessFileReader* file,
+Status ReadProperties(const ReadOptions& ro, const Slice& handle_value,
+                      RandomAccessFileReader* file,
                       FilePrefetchBuffer* prefetch_buffer, const Footer& footer,
                       const ImmutableCFOptions& ioptions,
                       TableProperties** table_properties, bool verify_checksum,
@@ -121,7 +122,8 @@ Status ReadTableProperties(RandomAccessFileReader* file, uint64_t file_size,
                            const ImmutableCFOptions& ioptions,
                            TableProperties** properties,
                            bool compression_type_missing = false,
-                           MemoryAllocator* memory_allocator = nullptr);
+                           MemoryAllocator* memory_allocator = nullptr,
+                           FilePrefetchBuffer* prefetch_buffer = nullptr);
 
 // Find the meta block from the meta index block.
 Status FindMetaBlock(InternalIterator* meta_index_iter,

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -472,6 +472,27 @@ class LDBTestCase(unittest.TestCase):
                              % (manifest_files[1]),
                              expected_pattern, unexpected=False,
                              isPattern=True)
+
+    def testGetProperty(self):
+        print("Running testGetProperty...")
+        dbPath = os.path.join(self.TMP_DIR, self.DB_NAME)
+        self.assertRunOK("put 1 1 --create_if_missing", "OK")
+        self.assertRunOK("put 2 2", "OK")
+        # A "string" property
+        cmd = "--db=%s get_property rocksdb.estimate-num-keys"
+        self.assertRunOKFull(cmd % dbPath,
+                             "rocksdb.estimate-num-keys: 2")
+        # A "map" property
+        # FIXME: why doesn't this pick up two entries?
+        cmd = "--db=%s get_property rocksdb.aggregated-table-properties"
+        part = "rocksdb.aggregated-table-properties.num_entries: "
+        expected_pattern = re.compile(part)
+        self.assertRunOKFull(cmd % dbPath,
+                             expected_pattern, unexpected=False,
+                             isPattern=True)
+        # An invalid property
+        cmd = "--db=%s get_property rocksdb.this-property-does-not-exist"
+        self.assertRunFAILFull(cmd % dbPath)
 
     def testSSTDump(self):
         print("Running testSSTDump...")
